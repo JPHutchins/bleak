@@ -60,6 +60,7 @@ test = [
 ]
 dev = [
     "poethepoet>=0.45.0",
+    "camas",
     { include-group = "docs" },
     { include-group = "lint" },
     { include-group = "test" },
@@ -72,6 +73,10 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "bleak"
 module-root = ""
+
+# camas is pulled from GitHub (latest, unreleased features) for this evaluation.
+[tool.uv.sources]
+camas = { git = "https://github.com/JPhutchins/camas.git" }
 
 [tool.isort]
 profile = "black"
@@ -175,3 +180,55 @@ args = [{ name = "checkonly", type = "boolean" }]
 help = "Build the documentation"
 cmd = "sphinx-build -b html -W -d docs/_build/doctrees docs docs/_build/html"
 executor = { python = "3.11", no-group = "dev", group = "docs" }
+
+
+# ---------------------------------------------------------------------------
+# camas — the same tasks expressed in TOML, for side-by-side comparison with
+# the [tool.poe.tasks] above. See tasks.py for the (better) Python version.
+#
+# NOTE: when tasks.py exists in this directory it takes precedence over this
+# block; to exercise this config, run camas where tasks.py is absent. TOML
+# cannot read .python-version, define helpers, or carry cwd/help, so the
+# Python versions are hardcoded and commands repeat — exactly what tasks.py
+# improves on.
+#
+# Fluent syntax: a (tuple) becomes a Sequential, a {set} becomes a Parallel,
+# bare names reference other tasks, and explicit Task(...)/Parallel(...) calls
+# are also accepted.
+# ---------------------------------------------------------------------------
+[tool.camas.tasks]
+# lint leaves — each `uv run` carries only the "lint" group, isolated from
+# the project's dev .venv (poe's `no-group = "dev"` + `isolated = true`).
+isort = 'Task("uv run --no-group dev --group lint isort .", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+isort_docs = 'Task("uv run --no-group dev --group lint isort docs", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+black = 'Task("uv run --no-group dev --group lint black .", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+flake8 = 'Task("uv run --no-group dev --group lint flake8 . --count --show-source --statistics", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+isort_check = 'Task("uv run --no-group dev --group lint isort . --check --diff", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+isort_docs_check = 'Task("uv run --no-group dev --group lint isort docs --check --diff", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+black_check = 'Task("uv run --no-group dev --group lint black . --check --diff", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
+
+# typecheck leaves — latest mypy/pyright installed ephemerally (poe's `with`).
+mypy = 'Task("uv run --no-group dev --group test --with mypy mypy", env={"UV_PROJECT_ENVIRONMENT": ".venv-mypy"})'
+pyright = 'Task("uv run --no-group dev --group test --with pyright pyright", env={"UV_PROJECT_ENVIRONMENT": ".venv-pyright"})'
+
+# composites
+format = "(isort, isort_docs, black)"
+lint = "(format, flake8)"
+lint_check = "(isort_check, isort_docs_check, black_check, flake8)"
+typecheck = "{mypy, pyright}"
+
+# one isolated leaf; `camas test -- <pytest args>` forwards the args.
+test = 'Task("uv run --no-group dev --group test pytest tests -v", env={"UV_PROJECT_ENVIRONMENT": ".venv-test"})'
+
+# one matrix replaces poe's five test-pyXXX tables + test-all (run all in
+# parallel, isolated venvs; `camas test-all --PY 3.12` runs a single cell).
+test_all = '''Parallel(
+    Task("uv run --no-group dev --group test pytest tests -v"),
+    matrix={"PY": ("3.10", "3.11", "3.12", "3.13", "3.14")},
+    env={"UV_PROJECT_ENVIRONMENT": ".venv-{PY}", "UV_PYTHON": "{PY}"},
+)'''
+
+docs = 'Task("uv run --python 3.11 --no-group dev --group docs sphinx-build -b html -W -d docs/_build/doctrees docs docs/_build/html", env={"UV_PROJECT_ENVIRONMENT": ".venv-docs"})'
+
+check = "{lint_check, typecheck, test}"
+ci = "(lint_check, typecheck, test_all)"

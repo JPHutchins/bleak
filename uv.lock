@@ -274,6 +274,7 @@ pythonista = [
 dev = [
     { name = "black" },
     { name = "bumble" },
+    { name = "camas" },
     { name = "flake8" },
     { name = "isort" },
     { name = "poethepoet" },
@@ -326,6 +327,7 @@ provides-extras = ["pythonista"]
 dev = [
     { name = "black", specifier = ">=24.3,<25.0" },
     { name = "bumble", specifier = "==0.0.226" },
+    { name = "camas", git = "https://github.com/JPhutchins/camas.git" },
     { name = "flake8", specifier = ">=7.1.1,<8.0.0" },
     { name = "isort", specifier = ">=5.13.2,<6.0.0" },
     { name = "poethepoet", specifier = ">=0.45.0" },
@@ -391,6 +393,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ec/a8/0fcd8858b0bdcc16b0137a0424abb26180eaa8b234e45e73c02cbdcdb3b3/bumble-0.0.226.tar.gz", hash = "sha256:e96f62c282a7376ab56b2f799e232d0985a8965e049030c50a59c4ff0b10f592", size = 2393394, upload-time = "2026-03-02T10:17:17.045Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/68/f4/0bd411e2de1afbc2435fce564945038b0b23e9ed5b36bff4803c52f4d5c4/bumble-0.0.226-py3-none-any.whl", hash = "sha256:1438c1713e7652bf42d794ee7e70e37af01ab7b5ffe1559e28c1faed9f2c5ca7", size = 687069, upload-time = "2026-03-02T10:17:14.915Z" },
+]
+
+[[package]]
+name = "camas"
+version = "0.1.9.dev11+g5e1810551"
+source = { git = "https://github.com/JPhutchins/camas.git#5e18105512089c70cff2d9268faf26161c90b1a8" }
+dependencies = [
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "taskgroup", marker = "python_full_version < '3.11'" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 
 [[package]]
@@ -1995,6 +2008,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3b/44/6716b257b0aa6bfd51a1b31665d1c205fb12cb5ad56de752dfa15657de2f/sphinxcontrib_serializinghtml-2.0.0.tar.gz", hash = "sha256:e9d912827f872c029017a53f0ef2180b327c3f7fd23c87229f7a8e8b70031d4d", size = 16080, upload-time = "2024-07-29T01:10:09.332Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/52/a7/d2782e4e3f77c8450f727ba74a8f12756d5ba823d81b941f1b04da9d033a/sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl", hash = "sha256:6e2cb0eef194e10c27ec0023bfeb25badbbb5868244cf5bc5bdc04e4464bf331", size = 92072, upload-time = "2024-07-29T01:10:08.203Z" },
+]
+
+[[package]]
+name = "taskgroup"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/8d/e218e0160cc1b692e6e0e5ba34e8865dbb171efeb5fc9a704544b3020605/taskgroup-0.2.2.tar.gz", hash = "sha256:078483ac3e78f2e3f973e2edbf6941374fbea81b9c5d0a96f51d297717f4752d", size = 11504, upload-time = "2025-01-03T09:24:13.761Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/b1/74babcc824a57904e919f3af16d86c08b524c0691504baf038ef2d7f655c/taskgroup-0.2.2-py2.py3-none-any.whl", hash = "sha256:e2c53121609f4ae97303e9ea1524304b4de6faf9eb2c9280c7f87976479a52fb", size = 14237, upload-time = "2025-01-03T09:24:11.41Z" },
 ]
 
 [[package]]
