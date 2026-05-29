@@ -93,8 +93,10 @@ packages = ["bleak", "tests", "examples"]
 
 [tool.pyright]
 typeCheckingMode = "strict"
-# tasks.py imports camas, a dev-only tool absent from the minimal typecheck env.
-exclude = ["**/.venv/**", "**/kivy/**", "**/recipes/**", "tasks.py"]
+# Scope to the source dirs (like mypy's `packages`) so pyright never walks the
+# per-task .venv-* environments; this also skips the tasks.py tooling file.
+include = ["bleak", "tests", "examples"]
+exclude = ["**/.venv/**", "**/kivy/**", "**/recipes/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
