@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["310", "311", "312", "313", "314"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     env:
       FORCE_COLOR: "1"
     steps:
@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Test with pytest
-        run: uv run poe test-py${{ matrix.python-version }} --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+        run: uv run camas test -- --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -53,7 +53,7 @@ jobs:
         # need to check each matrix combination.
 
         run: |
-          uv run poe typecheck
+          uv run camas typecheck
 
   integration_tests_bluez:
     name: "BlueZ integration tests"
@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["310", "311", "312", "313", "314"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
 
@@ -83,7 +83,7 @@ jobs:
             export FORCE_COLOR=1
             export CI=true
             export GITHUB_ACTIONS=true
-            uv run poe test-py${{ matrix.python-version }} --bleak-bluez-vhci --cov-report=xml --cov-report=html:../.htmlcov --junitxml=junit.xml -o junit_family=legacy -o cache_dir=../.pytest_cache
+            uv run camas test -- --bleak-bluez-vhci --cov-report=xml --cov-report=html:../.htmlcov --junitxml=junit.xml -o junit_family=legacy -o cache_dir=../.pytest_cache
           '
 
       - name: Upload coverage reports to Codecov

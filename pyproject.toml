@@ -59,7 +59,6 @@ test = [
     "bumble==0.0.226",
 ]
 dev = [
-    "poethepoet>=0.45.0",
     "camas",
     { include-group = "docs" },
     { include-group = "lint" },
@@ -74,7 +73,7 @@ build-backend = "uv_build"
 module-name = "bleak"
 module-root = ""
 
-# camas is pulled from GitHub (latest, unreleased features) for this evaluation.
+# camas (the task runner; see tasks.py) is pulled from GitHub for the latest features.
 [tool.uv.sources]
 camas = { git = "https://github.com/JPhutchins/camas.git" }
 
@@ -83,6 +82,7 @@ profile = "black"
 py_version=310
 src_paths = ["bleak", "examples", "tests"]
 extend_skip = [".buildozer", "docs"]
+extend_skip_glob = [".venv*"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -93,7 +93,8 @@ packages = ["bleak", "tests", "examples"]
 
 [tool.pyright]
 typeCheckingMode = "strict"
-exclude = ["**/.venv/**", "**/kivy/**", "**/recipes/**"]
+# tasks.py imports camas, a dev-only tool absent from the minimal typecheck env.
+exclude = ["**/.venv/**", "**/kivy/**", "**/recipes/**", "tasks.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -112,123 +113,3 @@ addopts = """
 --cov-branch
 --cov-report html
 """
-
-
-
-[tool.poe.executor]
-type = "uv"
-isolated = true
-
-[tool.poe.tasks.test-py310]
-help = "Run tests using Python 3.10"
-cmd = "pytest tests -v $POE_EXTRA_ARGS"
-executor = { python = "3.10", no-group = "dev", group = "test" }
-
-[tool.poe.tasks.test-py311]
-help = "Run tests using Python 3.11"
-cmd = "pytest tests -v $POE_EXTRA_ARGS"
-executor = { python = "3.11", no-group = "dev", group = "test" }
-
-[tool.poe.tasks.test-py312]
-help = "Run tests using Python 3.12"
-cmd = "pytest tests -v $POE_EXTRA_ARGS"
-executor = { python = "3.12", no-group = "dev", group = "test" }
-
-[tool.poe.tasks.test-py313]
-help = "Run tests using Python 3.13"
-cmd = "pytest tests -v $POE_EXTRA_ARGS"
-executor = { python = "3.13", no-group = "dev", group = "test" }
-
-[tool.poe.tasks.test-py314]
-help = "Run tests using Python 3.14"
-cmd = "pytest tests -v $POE_EXTRA_ARGS"
-executor = { python = "3.14", no-group = "dev", group = "test" }
-
-[tool.poe.tasks.test-all]
-help = "Run tests using all supported Python versions"
-sequence = [
-    "test-py310",
-    "test-py311",
-    "test-py312",
-    "test-py313",
-    "test-py314",
-]
-
-[tool.poe.tasks.typecheck]
-help = "Run type checkers (mypy, pyright)"
-
-# We want always the latest version of pyright and mypy, to catch
-# any breakage as soon as we can. That is why they are not dev
-# dependencies in the pyproject.toml, because that would lock them to
-# a specific version. Instead we install the latest version as tool.
-sequence = [
-    { cmd = "mypy", executor = { no-group = "dev", group = "test", with = "mypy" } },
-    { cmd = "pyright", executor = { no-group = "dev", group = "test", with = "pyright" } },
-]
-
-[tool.poe.tasks.lint]
-help = "Run code linters (isort, black, flake8)"
-sequence = [
-    { cmd = "isort . ${checkonly:+--check --diff}", executor = { no-group = "dev", group = "lint" } },
-    { cmd = "isort docs ${checkonly:+--check --diff}", executor = { no-group = "dev", group = "lint" } },
-    { cmd = "black . ${checkonly:+--check --diff}", executor = { no-group = "dev", group = "lint" } },
-    { cmd = "flake8 . --count --show-source --statistics", executor = { no-group = "dev", group = "lint" } },
-]
-args = [{ name = "checkonly", type = "boolean" }]
-
-[tool.poe.tasks.docs]
-help = "Build the documentation"
-cmd = "sphinx-build -b html -W -d docs/_build/doctrees docs docs/_build/html"
-executor = { python = "3.11", no-group = "dev", group = "docs" }
-
-
-# ---------------------------------------------------------------------------
-# camas — the same tasks expressed in TOML, for side-by-side comparison with
-# the [tool.poe.tasks] above. See tasks.py for the (better) Python version.
-#
-# NOTE: when tasks.py exists in this directory it takes precedence over this
-# block; to exercise this config, run camas where tasks.py is absent. TOML
-# cannot read .python-version, define helpers, or carry cwd/help, so the
-# Python versions are hardcoded and commands repeat — exactly what tasks.py
-# improves on.
-#
-# Fluent syntax: a (tuple) becomes a Sequential, a {set} becomes a Parallel,
-# bare names reference other tasks, and explicit Task(...)/Parallel(...) calls
-# are also accepted.
-# ---------------------------------------------------------------------------
-[tool.camas.tasks]
-# lint leaves — each `uv run` carries only the "lint" group, isolated from
-# the project's dev .venv (poe's `no-group = "dev"` + `isolated = true`).
-isort = 'Task("uv run --no-group dev --group lint isort .", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-isort_docs = 'Task("uv run --no-group dev --group lint isort docs", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-black = 'Task("uv run --no-group dev --group lint black .", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-flake8 = 'Task("uv run --no-group dev --group lint flake8 . --count --show-source --statistics", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-isort_check = 'Task("uv run --no-group dev --group lint isort . --check --diff", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-isort_docs_check = 'Task("uv run --no-group dev --group lint isort docs --check --diff", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-black_check = 'Task("uv run --no-group dev --group lint black . --check --diff", env={"UV_PROJECT_ENVIRONMENT": ".venv-lint"})'
-
-# typecheck leaves — latest mypy/pyright installed ephemerally (poe's `with`).
-mypy = 'Task("uv run --no-group dev --group test --with mypy mypy", env={"UV_PROJECT_ENVIRONMENT": ".venv-mypy"})'
-pyright = 'Task("uv run --no-group dev --group test --with pyright pyright", env={"UV_PROJECT_ENVIRONMENT": ".venv-pyright"})'
-
-# composites
-format = "(isort, isort_docs, black)"
-lint = "(format, flake8)"
-lint_check = "(isort_check, isort_docs_check, black_check, flake8)"
-typecheck = "{mypy, pyright}"
-
-# one isolated leaf; `camas test -- <pytest args>` forwards the args.
-test = 'Task("uv run --no-group dev --group test pytest tests -v", env={"UV_PROJECT_ENVIRONMENT": ".venv-test"})'
-
-# one matrix replaces poe's five test-pyXXX tables + test-all (run all in
-# parallel, isolated venvs; `camas test-all --PY 3.12` runs a single cell).
-test_all = '''Parallel(
-    Task("uv run --no-group dev --group test pytest tests -v"),
-    matrix={"PY": ("3.10", "3.11", "3.12", "3.13", "3.14")},
-    env={"UV_PROJECT_ENVIRONMENT": ".venv-{PY}", "UV_PYTHON": "{PY}"},
-)'''
-
-docs = 'Task("uv run --python 3.11 --no-group dev --group docs sphinx-build -b html -W -d docs/_build/doctrees docs docs/_build/html", env={"UV_PROJECT_ENVIRONMENT": ".venv-docs"})'
-
-check = "{lint_check, typecheck, test}"
-ci = "(lint_check, typecheck, test_all)"
