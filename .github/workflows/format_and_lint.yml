@@ -18,7 +18,7 @@ jobs:
           version: "latest"
 
       - name: Check import sort with isort, code formatting with black, and lint with flake8
-        run: uv run poe lint --checkonly
+        run: uv run camas lint_check
 
       - name: Build docs
-        run: uv run poe docs
+        run: uv run camas docs
